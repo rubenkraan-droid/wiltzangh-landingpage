@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advertentie Dashboard – Vakantiepark De Wiltzangh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Roboto:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:        #0099bf;
+      --teal-dim:    rgba(0,153,191,0.15);
+      --teal-dark:   #042f2e;
+      --amber:       #f8a800;
+      --amber-dim:   rgba(248,168,0,0.15);
+      --green-ok:    #22c55e;
+      --green-dim:   rgba(34,197,94,0.15);
+      --red:         #ef4444;
+      --bg:          #0d1117;
+      --bg-card:     #161c26;
+      --bg-hover:    #1e2636;
+      --border:      rgba(255,255,255,0.07);
+      --text:        #f0f4f8;
+      --text-muted:  #7a8899;
+      --text-dim:    #4a5568;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+    h1, h2, h3, .logo-text { font-family: 'Comfortaa', sans-serif; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 20px 28px 0; gap: 12px;
+    }
+    .topbar-left h1 { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .topbar-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+    .topbar-meta .cache-badge {
+      display: inline-block; background: var(--teal-dim); color: var(--teal);
+      font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 3px; margin-left: 6px;
+    }
+    .btn-print {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
+      padding: 8px 16px; border-radius: 6px; font-family: 'Roboto', sans-serif;
+      font-size: 0.82rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-print:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── TABS ── */
+    .tabs-wrap { padding: 16px 28px 0; border-bottom: 1px solid var(--border); }
+    .tabs { display: flex; gap: 4px; }
+    .tab {
+      padding: 10px 18px; font-family: 'Roboto', sans-serif; font-size: 0.88rem; font-weight: 500;
+      color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+    /* ── FILTER BAR ── */
+    .filters { display: flex; align-items: center; gap: 8px; padding: 14px 28px; flex-wrap: wrap; }
+    .filter-group { display: flex; gap: 6px; }
+    .filter-sep { width: 1px; background: var(--border); margin: 0 4px; }
+    .fbtn {
+      padding: 6px 14px; border-radius: 20px; font-family: 'Roboto', sans-serif;
+      font-size: 0.8rem; font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+      color: var(--text-muted); background: transparent; transition: all 0.18s; white-space: nowrap;
+    }
+    .fbtn:hover { border-color: var(--teal); color: var(--teal); }
+    .fbtn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .fbtn.active-amber { background: var(--amber); border-color: var(--amber); color: #fff; }
+    .fbtn-demo {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .fbtn-demo:hover { border-color: var(--green-ok); color: var(--green-ok); }
+
+    /* ── KPI CARDS ── */
+    .kpi-row { display: flex; gap: 10px; padding: 0 28px; flex-wrap: wrap; }
+    .kpi {
+      flex: 1; min-width: 100px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; transition: border-color 0.2s;
+    }
+    .kpi:hover { border-color: var(--teal); }
+    .kpi-label {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+    }
+    .kpi-badge {
+      font-size: 0.62rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase;
+    }
+    .badge-amber  { background: var(--amber-dim); color: var(--amber); }
+    .badge-teal   { background: var(--teal-dim);  color: var(--teal); }
+    .badge-green  { background: var(--green-dim); color: var(--green-ok); }
+    .badge-red    { background: rgba(239,68,68,0.15); color: var(--red); }
+    .kpi-value {
+      font-family: 'Comfortaa', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text);
+      line-height: 1;
+    }
+    .kpi-value.teal  { color: var(--teal); }
+    .kpi-value.amber { color: var(--amber); }
+    .kpi-value.green { color: var(--green-ok); }
+    .kpi-value.dash  { color: var(--text-dim); font-size: 1.4rem; }
+
+    /* ── CHART CARD ── */
+    .chart-card {
+      margin: 18px 28px 0; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px;
+    }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .chart-header h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .chart-legend { display: flex; gap: 18px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-line { width: 20px; height: 2px; border-radius: 2px; }
+    .legend-dashed { border-top: 2px dashed; height: 0; width: 20px; }
+    .chart-wrap { position: relative; height: 280px; }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+      margin: 18px 28px 28px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .table-header h2 { font-size: 1rem; font-weight: 600; }
+    .table-search {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 12px; color: var(--text); font-family: 'Roboto', sans-serif; font-size: 0.82rem;
+      outline: none; width: 200px;
+    }
+    .table-search:focus { border-color: var(--teal); }
+    .table-search::placeholder { color: var(--text-dim); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    thead th {
+      padding: 10px 12px; text-align: left; font-size: 0.68rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+      border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { color: var(--teal); }
+    thead th .sort-arrow { opacity: 0.4; margin-left: 3px; }
+    thead th.sort-active { color: var(--teal); }
+    thead th.sort-active .sort-arrow { opacity: 1; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg-hover); }
+    tbody td { padding: 12px 12px; color: var(--text); white-space: nowrap; }
+    .td-name { font-weight: 500; color: var(--text); max-width: 200px; }
+    .td-muted { color: var(--text-muted); }
+    .td-teal  { color: var(--teal); font-weight: 600; }
+    .td-amber { color: var(--amber); font-weight: 600; }
+    .td-green { color: var(--green-ok); font-weight: 600; }
+    .td-red   { color: var(--red); font-weight: 600; }
+    .td-dash  { color: var(--text-dim); }
+
+    .status-pill {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .pill-actief  { background: var(--green-dim); color: var(--green-ok); }
+    .pill-gestopt { background: rgba(239,68,68,0.15); color: var(--red); }
+    .pill-concept { background: var(--amber-dim); color: var(--amber); }
+
+    /* ── TOTALS ROW ── */
+    .totals-row td { background: rgba(0,153,191,0.06); font-weight: 600; color: var(--text); border-top: 1px solid var(--border); }
+
+    /* ── SECTION GAP ── */
+    .section-gap { height: 18px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .topbar, .tabs-wrap, .filters, .kpi-row, .chart-card, .table-card { padding-left: 14px; padding-right: 14px; }
+      .chart-card, .table-card { margin-left: 14px; margin-right: 14px; }
+      .kpi { min-width: 140px; }
+      .chart-legend { flex-wrap: wrap; gap: 10px; }
+      .table-search { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Advertentie Dashboard</h1>
+    <div class="topbar-meta">
+      Gegevens van <span id="meta-date">24-6-2026 om 03:40</span>
+      <span class="cache-badge">uit cache</span>
+    </div>
+    <div class="topbar-meta" style="margin-top:6px;">
+      <img src="https://cdn-cms.bookingexperts.com/uploads/theming/logo/image/19/37/Vakantiepark_De_Wiltzangh_FC.png" style="height:24px; filter:brightness(0) invert(1) opacity(0.5);" alt="De Wiltzangh" />
+    </div>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print rapport
+  </button>
+</div>
+
+<!-- ── TABS ── -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab active" onclick="setTab(this)">Advertenties</div>
+    <div class="tab" onclick="setTab(this)">Verkoop &amp; Inventaris</div>
+    <div class="tab" onclick="setTab(this)">Sell-out Projector</div>
+    <div class="tab" onclick="setTab(this)">Marketingfunnel</div>
+    <div class="tab" onclick="setTab(this)">AI Briefing</div>
+  </div>
+</div>
+
+<!-- ── FILTERS ── -->
+<div class="filters">
+  <div class="filter-group" id="period-filters">
+    <button class="fbtn" onclick="setPeriod(this)">Laatste 7 dagen</button>
+    <button class="fbtn active" onclick="setPeriod(this)">Laatste 30 dagen</button>
+    <button class="fbtn" onclick="setPeriod(this)">Deze maand</button>
+    <button class="fbtn" onclick="setPeriod(this)">Kies maand… ▾</button>
+    <button class="fbtn" onclick="setPeriod(this)">All-time</button>
+    <button class="fbtn" onclick="setPeriod(this)">Aangepast</button>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group" id="status-filters">
+    <button class="fbtn active-amber" onclick="setStatus(this)">Alle</button>
+    <button class="fbtn" onclick="setStatus(this)">Actief</button>
+    <button class="fbtn" onclick="setStatus(this)">Gestopt</button>
+    <button class="fbtn fbtn-demo" onclick="setStatus(this)">▶ Demo</button>
+  </div>
+</div>
+
+<!-- ── KPI CARDS ── -->
+<div class="kpi-row" id="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">Totaal Uitgaven</div>
+    <div class="kpi-value">€ 814</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Clicks</div>
+    <div class="kpi-value">1.676</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Leads <span class="kpi-badge badge-amber">2.21% opt-in</span></div>
+    <div class="kpi-value">37</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">CPL</div>
+    <div class="kpi-value">€ 22</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Afspraken <span class="kpi-badge badge-teal">5%</span></div>
+    <div class="kpi-value">2</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">CPA Afspraak</div>
+    <div class="kpi-value">€ 407</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Sales <span class="kpi-badge badge-red">0%</span></div>
+    <div class="kpi-value amber">0</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">CPS</div>
+    <div class="kpi-value dash">—</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Omzet</div>
+    <div class="kpi-value">€ 0</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">ROAS</div>
+    <div class="kpi-value teal">0.00×</div>
+  </div>
+</div>
+
+<div class="section-gap"></div>
+
+<!-- ── TREND CHART ── -->
+<div class="chart-card">
+  <div class="chart-header">
+    <h2>Trend</h2>
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-line" style="background:#0099bf;"></div>
+        Uitgaven
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background:#f8a800;"></div>
+        Leads
+      </div>
+      <div class="legend-item">
+        <div class="legend-dashed" style="border-color:#22c55e;"></div>
+        CPL
+      </div>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="trendChart"></canvas>
+  </div>
+</div>
+
+<!-- ── AD TABLE ── -->
+<div class="table-card">
+  <div class="table-header">
+    <h2>Advertenties</h2>
+    <input class="table-search" type="text" placeholder="Zoek advertentie…" oninput="filterTable(this.value)" />
+  </div>
+  <div style="overflow-x:auto;">
+    <table id="adTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Advertentie <span class="sort-arrow">↕</span></th>
+          <th>Status</th>
+          <th onclick="sortTable(2)" class="sort-active">Uitgaven <span class="sort-arrow">↓</span></th>
+          <th onclick="sortTable(3)">Clicks <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(4)">CPC <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(5)">Opt-in% <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(6)">Leads <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(7)">CPL <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(8)">Afsp% <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(9)">Afspraken <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(10)">CPA <span class="sort-arrow">↕</span></th>
+          <th>Sales%</th>
+          <th onclick="sortTable(12)">Sales <span class="sort-arrow">↕</span></th>
+          <th>CPS</th>
+          <th onclick="sortTable(14)">Omzet <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(15)">ROAS <span class="sort-arrow">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+      </tbody>
+      <tfoot>
+        <tr class="totals-row" id="totalsRow"></tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const ads = [
+  { name: 'Heideborg Lodge – VD-AD1',    status: 'Actief',   uitg: 100.82, clicks: 143, cpc: 0.71, optin: 2.10, leads: 3,  cpl: 33.61, afspPct: 33, afsp: 1, cpa: 101, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Groeneborg Lodge 6 – VD-AD2', status: 'Actief',   uitg:  91.34, clicks: 147, cpc: 0.62, optin: 4.76, leads: 7,  cpl: 13.05, afspPct: 14, afsp: 1, cpa:  91, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Eikenborg Wellness – VD-AD3', status: 'Actief',   uitg:  78.50, clicks: 210, cpc: 0.37, optin: 1.90, leads: 4,  cpl: 19.63, afspPct:  0, afsp: 0, cpa:   0, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Heide Villa 4 – VD-AD4',      status: 'Actief',   uitg: 142.60, clicks: 312, cpc: 0.46, optin: 2.56, leads: 8,  cpl: 17.83, afspPct: 13, afsp: 1, cpa: 143, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Zandborg Lodge – VD-AD5',     status: 'Gestopt',  uitg:  64.22, clicks:  98, cpc: 0.66, optin: 1.02, leads: 1,  cpl: 64.22, afspPct:  0, afsp: 0, cpa:   0, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Esborg Lodge – VD-AD6',       status: 'Actief',   uitg: 112.40, clicks: 289, cpc: 0.39, optin: 3.80, leads: 11, cpl: 10.22, afspPct:  9, afsp: 1, cpa: 112, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Losse kavel – VD-AD7',        status: 'Concept',  uitg:  45.80, clicks: 134, cpc: 0.34, optin: 0.75, leads: 1,  cpl: 45.80, afspPct:  0, afsp: 0, cpa:   0, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Loevestein Lodge – VD-AD8',   status: 'Actief',   uitg:  88.29, clicks: 196, cpc: 0.45, optin: 1.53, leads: 3,  cpl: 29.43, afspPct:  0, afsp: 0, cpa:   0, salesPct: 0, sales: 0, omzet: 0 },
+  { name: 'Uilenborg Lodge – VD-AD9',    status: 'Gestopt',  uitg:  90.30, clicks: 147, cpc: 0.61, optin: 4.08, leads: 6,  cpl: 15.05, afspPct:  0, afsp: 0, cpa:   0, salesPct: 0, sales: 0, omzet: 0 },
+];
+
+// ── CHART ──
+const labels = ['25 mei','26 mei','27 mei','28 mei','29 mei','30 mei','31 mei','1 jun','2 jun','3 jun','4 jun','5 jun','6 jun','7 jun','8 jun','9 jun','10 jun','11 jun','12 jun','13 jun','14 jun','15 jun','16 jun','17 jun','18 jun','19 jun','20 jun','21 jun','22 jun','23 jun'];
+const uitgData = [8,8,10,12,18,22,32,36,38,42,52,48,44,38,42,36,40,34,32,36,34,38,42,48,56,62,70,68,52,4];
+const leadsData = [0,0,1,0,1,1,2,1,2,1,4,2,3,1,3,1,2,0,1,2,1,2,1,3,2,4,5,3,4,0];
+const cplData = [0,0,10,0,18,22,16,36,19,42,13,24,15,38,14,36,20,0,32,18,34,19,42,16,28,16,14,23,13,0];
+
+const ctx = document.getElementById('trendChart').getContext('2d');
+new Chart(ctx, {
+  data: {
+    labels,
+    datasets: [
+      {
+        type: 'line', label: 'Uitgaven', data: uitgData,
+        borderColor: '#0099bf', backgroundColor: 'rgba(0,153,191,0.08)',
+        tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#0099bf',
+        yAxisID: 'y',
+      },
+      {
+        type: 'line', label: 'Leads', data: leadsData,
+        borderColor: '#f8a800', backgroundColor: 'transparent',
+        tension: 0.4, fill: false, pointRadius: 3, pointBackgroundColor: '#f8a800',
+        yAxisID: 'y2',
+      },
+      {
+        type: 'line', label: 'CPL', data: cplData,
+        borderColor: '#22c55e', backgroundColor: 'transparent',
+        tension: 0.4, fill: false, pointRadius: 2, borderDash: [5, 4],
+        yAxisID: 'y3',
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e2636', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+        titleColor: '#f0f4f8', bodyColor: '#7a8899',
+        callbacks: {
+          label: ctx => {
+            if (ctx.dataset.label === 'Uitgaven') return ` Uitgaven: € ${ctx.parsed.y.toFixed(0)}`;
+            if (ctx.dataset.label === 'Leads')    return ` Leads: ${ctx.parsed.y}`;
+            if (ctx.dataset.label === 'CPL')      return ` CPL: € ${ctx.parsed.y.toFixed(0)}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4a5568', font: { size: 11 }, maxTicksLimit: 10 } },
+      y:  { position: 'left',  grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4a5568', callback: v => `€ ${v}` }, title: { display: false } },
+      y2: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#f8a800', font: { size: 11 } } },
+      y3: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#22c55e', font: { size: 11 }, callback: v => `€ ${v}` }, display: false },
+    }
+  }
+});
+
+// ── TABLE RENDER ──
+function fmt(n, prefix = '') {
+  if (n === null || n === undefined || n === 0 && prefix === '€ ') return '<span class="td-dash">—</span>';
+  const s = n % 1 === 0 ? n.toLocaleString('nl-NL') : n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return prefix + s;
+}
+
+function statusPill(s) {
+  const cls = s === 'Actief' ? 'pill-actief' : s === 'Gestopt' ? 'pill-gestopt' : 'pill-concept';
+  return `<span class="status-pill ${cls}">${s}</span>`;
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map(a => {
+    const roas = a.omzet > 0 ? (a.omzet / a.uitg).toFixed(2) + '×' : '<span class="td-teal">0.00×</span>';
+    const cps  = a.sales > 0 ? '€ ' + (a.uitg / a.sales).toLocaleString('nl-NL', {minimumFractionDigits:0}) : '<span class="td-dash">—</span>';
+    return `<tr>
+      <td class="td-name">${a.name}</td>
+      <td>${statusPill(a.status)}</td>
+      <td>€ ${a.uitg.toLocaleString('nl-NL', {minimumFractionDigits:2})}</td>
+      <td>${a.clicks.toLocaleString('nl-NL')}</td>
+      <td>€ ${a.cpc.toFixed(2)}</td>
+      <td class="${a.optin >= 3 ? 'td-green' : a.optin < 1.5 ? 'td-red' : ''}">${a.optin.toFixed(2)}%</td>
+      <td>${a.leads}</td>
+      <td>€ ${a.cpl.toFixed(0)}</td>
+      <td class="${a.afspPct >= 20 ? 'td-green' : ''}">${a.afspPct}%</td>
+      <td>${a.afsp}</td>
+      <td>${a.cpa > 0 ? '€ ' + a.cpa : '<span class="td-dash">—</span>'}</td>
+      <td class="td-muted">${a.salesPct}%</td>
+      <td class="${a.sales === 0 ? 'td-amber' : 'td-green'}">${a.sales}</td>
+      <td>${cps}</td>
+      <td>€ ${a.omzet}</td>
+      <td>${roas}</td>
+    </tr>`;
+  }).join('');
+
+  // totals
+  const t = {
+    uitg: data.reduce((s,a) => s+a.uitg,0),
+    clicks: data.reduce((s,a) => s+a.clicks,0),
+    leads: data.reduce((s,a) => s+a.leads,0),
+    afsp: data.reduce((s,a) => s+a.afsp,0),
+    sales: data.reduce((s,a) => s+a.sales,0),
+    omzet: data.reduce((s,a) => s+a.omzet,0),
+  };
+  document.getElementById('totalsRow').innerHTML = `
+    <td><strong>Totaal</strong></td>
+    <td></td>
+    <td>€ ${t.uitg.toLocaleString('nl-NL',{minimumFractionDigits:2})}</td>
+    <td>${t.clicks.toLocaleString('nl-NL')}</td>
+    <td>€ ${(t.uitg/t.clicks).toFixed(2)}</td>
+    <td>${((t.leads/t.clicks)*100).toFixed(2)}%</td>
+    <td>${t.leads}</td>
+    <td>€ ${t.leads > 0 ? (t.uitg/t.leads).toFixed(0) : '—'}</td>
+    <td>${t.leads > 0 ? ((t.afsp/t.leads)*100).toFixed(0) : 0}%</td>
+    <td>${t.afsp}</td>
+    <td>${t.afsp > 0 ? '€ '+(t.uitg/t.afsp).toFixed(0) : '—'}</td>
+    <td>0%</td>
+    <td class="td-amber">${t.sales}</td>
+    <td class="td-dash">—</td>
+    <td>€ ${t.omzet}</td>
+    <td class="td-teal">0.00×</td>
+  `;
+}
+
+renderTable(ads);
+
+// ── FILTER TABLE ──
+function filterTable(q) {
+  const filtered = ads.filter(a => a.name.toLowerCase().includes(q.toLowerCase()));
+  renderTable(filtered);
+}
+
+// ── SORT ──
+let sortCol = 2, sortDir = -1;
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = -1; }
+  const cols = ['name','status','uitg','clicks','cpc','optin','leads','cpl','afspPct','afsp','cpa','salesPct','sales',null,'omzet',null];
+  const key = cols[col];
+  if (!key) return;
+  const sorted = [...ads].sort((a,b) => {
+    const va = a[key], vb = b[key];
+    if (typeof va === 'string') return va.localeCompare(vb) * sortDir;
+    return (va - vb) * sortDir;
+  });
+  renderTable(sorted);
+  document.querySelectorAll('thead th').forEach((th,i) => {
+    th.classList.toggle('sort-active', i === col);
+    const arr = th.querySelector('.sort-arrow');
+    if (arr) arr.textContent = i === col ? (sortDir === -1 ? '↓' : '↑') : '↕';
+  });
+}
+
+// ── TAB / FILTER HANDLERS ──
+function setTab(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+function setPeriod(el) {
+  document.querySelectorAll('#period-filters .fbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function setStatus(el) {
+  document.querySelectorAll('#status-filters .fbtn').forEach(b => { b.classList.remove('active'); b.classList.remove('active-amber'); });
+  el.classList.add('active-amber');
+}
+
+// Live date
+document.getElementById('meta-date').textContent =
+  new Date().toLocaleDateString('nl-NL', {day:'2-digit',month:'numeric',year:'numeric'}) +
+  ' om ' + new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'});
+</script>
+</body>
+</html>
